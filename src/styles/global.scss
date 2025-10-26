@@ -1,3 +1,11 @@
+:root {
+  --clr-light-sage: #373d29;
+  --clr-red: #561d25;
+  --clr-white: #fafffd;
+  --clr-sage: #25291c;
+  --clr-yellow: #cba328;
+  --clr-black: #1e1e1e;
+}
 body,
 html {
   display: flex;
@@ -5,21 +13,31 @@ html {
 
   padding: 0;
   margin: 0;
+
+  background: var(--clr-black);
+  color: var(--clr-white);
 }
 
 body {
   min-height: 100dvh;
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr auto;
 }
 
 main {
   min-height: 100%;
-  display: flex;
 
+  display: flex;
+  flex-direction: column;
   flex-grow: 1;
 
   .inner {
     width: 100%;
-    display: flex;
+    min-height: 100%;
+
+    flex-grow: 1;
   }
 }
 

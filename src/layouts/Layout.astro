@@ -1,6 +1,7 @@
 ---
 // Properties & Data
 const { title = "" } = Astro.props;
+import Header from "../components/Header.astro";
 const websiteTitle = "The Bible";
 ---
 
@@ -11,9 +12,7 @@ const websiteTitle = "The Bible";
     <title>{title} - {websiteTitle}</title>
   </head>
   <body>
-    <header>
-      <h1>The Bible</h1>
-    </header>
+    <Header />
     <main id="main-content">
       <div class="inner">
         <slot />

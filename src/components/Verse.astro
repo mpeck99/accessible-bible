@@ -2,7 +2,40 @@
 import fs from "fs";
 import path from "path";
 
-const biblePath = path.resolve("./src/data/eng_kjv-full.json");
+const bibleVersion = [
+  {
+    id: "eng_kjv",
+    abbr: "KJV",
+    name: "King James (Authorized) Version",
+    path: "./src/data/eng_kjv.json",
+  },
+  {
+    id: "eng_kja",
+    abbr: "KJV+Apocrypha",
+    name: "King James Version + Apocrypha",
+    path: "./src/data/eng_kja.json",
+  },
+  {
+    id: "eng_asv",
+    abbr: "ASV",
+    name: "American Standard Version",
+    path: "./src/data/eng_asv.json",
+  },
+  {
+    id: "eng_web",
+    abbr: "WEB",
+    name: "World English Bible",
+    path: "./src/data/eng_web.json",
+  },
+];
+
+// Get selected version from query parameter or use first version as default
+const url = new URL(Astro.request.url);
+const selectedVersionId = url.searchParams.get("version") || bibleVersion[0].id;
+const selectedVersion =
+  bibleVersion.find((v) => v.id === selectedVersionId) || bibleVersion[0];
+
+const biblePath = path.resolve(selectedVersion.path);
 const bibleData = JSON.parse(fs.readFileSync(biblePath, "utf-8"));
 
 function getRandomElement(array) {
@@ -26,7 +59,16 @@ function getRandomVerse() {
 const verse = getRandomVerse();
 ---
 
-<style></style>
+<label for="bible-version">Bible Version:</label>
+<select id="bible-version">
+  {
+    bibleVersion.map((version) => (
+      <option value={version.id} selected={version.id === selectedVersion.id}>
+        {version.abbr} - {version.name}
+      </option>
+    ))
+  }
+</select>
 
 <div class="verse">
   <h2 class="verse-heading">
@@ -34,4 +76,14 @@ const verse = getRandomVerse();
     {verse.chapter}:{verse.verseNumber}
   </h2>
   <p class="verse-content">{verse.verseText}</p>
+  <a href="#0">Read more</a>
 </div>
+
+<script>
+  const versionSelect = document.getElementById("bible-version");
+
+  versionSelect?.addEventListener("change", (e) => {
+    const selectedVersion = (e.target as HTMLSelectElement).value;
+    window.location.href = `?version=${selectedVersion}`;
+  });
+</script>
