@@ -1,4 +1,37 @@
+---
+import fs from "fs";
+import path from "path";
+
+const biblePath = path.resolve("./src/data/eng_kjv-full.json");
+const bibleData = JSON.parse(fs.readFileSync(biblePath, "utf-8"));
+
+function getRandomElement(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function getRandomVerse() {
+  const books = Object.keys(bibleData);
+  const book = getRandomElement(books);
+
+  const chapters = Object.keys(bibleData[book]);
+  const chapter = getRandomElement(chapters);
+
+  const verses = Object.keys(bibleData[book][chapter]);
+  const verseNumber = getRandomElement(verses);
+  const verseText = bibleData[book][chapter][verseNumber];
+
+  return { book, chapter, verseNumber, verseText };
+}
+
+const verse = getRandomVerse();
+---
+
+<style></style>
+
 <div class="verse">
-  <p class="text"></p>
-  <p class="book"></p>
+  <h2 class="verse-heading">
+    {verse.book}
+    {verse.chapter}:{verse.verseNumber}
+  </h2>
+  <p class="verse-content">{verse.verseText}</p>
 </div>
