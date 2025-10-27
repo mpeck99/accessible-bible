@@ -92,15 +92,15 @@ const nextUrl = hasNext
   </nav>
 
   <h1>{bookName} {chapterNumber}</h1>
-  <p class="version">{versionName}</p>
+  <p class="version"><strong>{versionName}</strong></p>
 
   <div class="verses">
     {
       Object.entries(verses).map(([verseNum, verseText]) => (
-        <div class="verse">
-          <span class="verse-number">{verseNum}</span>
-          <span class="verse-text">{verseText}</span>
-        </div>
+        <p class="verse">
+          <sup class="verse-number">{verseNum}</sup>
+          {verseText}
+        </p>
       ))
     }
   </div>

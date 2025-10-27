@@ -92,11 +92,12 @@ const translationsJSON = JSON.stringify(allTranslations);
 const verseRefJSON = JSON.stringify(verseRef);
 ---
 
-<div>
+<div class="verse">
   <h1 class="verse-heading">
     {verseRef.book}
     {verseRef.chapter}:{verseRef.verseNumber}
   </h1>
+  <button id="refresh">Refresh</button>
 
   <div class="card-wrapper">
     {
@@ -109,8 +110,6 @@ const verseRefJSON = JSON.stringify(verseRef);
       ))
     }
   </div>
-
-  <button id="random-button">Get Another Random Verse</button>
 </div>
 
 <script define:vars={{ translationsJSON, verseRefJSON }}>
@@ -121,18 +120,15 @@ const verseRefJSON = JSON.stringify(verseRef);
   console.log("Verse Reference:", verseReference);
   console.log("All Translations:", translations);
 
-  // You can now do whatever you want with this data!
-  // Example: Access a specific translation
   console.log("KJV Translation:", translations.eng_kjv?.text);
   console.log("NIV Translation:", translations.niv?.text);
 
   // Handle Random button click
-  const randomButton = document.getElementById("random-button");
+  const randomButton = document.getElementById("refresh");
   randomButton?.addEventListener("click", () => {
     window.location.reload();
   });
 
-  // Example: You can manipulate the translations object
   // Filter only translations that are available
   const availableTranslations = Object.entries(translations).filter(
     ([id, trans]) => trans.text !== "Not available in this translation"
