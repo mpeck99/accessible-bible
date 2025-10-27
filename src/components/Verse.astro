@@ -10,12 +10,6 @@ const bibleVersion = [
     path: "./src/data/eng_kjv.json",
   },
   {
-    id: "eng_kja",
-    abbr: "KJV+Apocrypha",
-    name: "King James Version + Apocrypha",
-    path: "./src/data/eng_kja.json",
-  },
-  {
     id: "eng_asv",
     abbr: "ASV",
     name: "American Standard Version",
@@ -27,63 +21,121 @@ const bibleVersion = [
     name: "World English Bible",
     path: "./src/data/eng_web.json",
   },
+  {
+    id: "niv",
+    abbr: "NIV",
+    name: "New International Version",
+    path: "./src/data/niv.json",
+  },
 ];
 
-// Get selected version from query parameter or use first version as default
-const url = new URL(Astro.request.url);
-const selectedVersionId = url.searchParams.get("version") || bibleVersion[0].id;
-const selectedVersion =
-  bibleVersion.find((v) => v.id === selectedVersionId) || bibleVersion[0];
-
-const biblePath = path.resolve(selectedVersion.path);
-const bibleData = JSON.parse(fs.readFileSync(biblePath, "utf-8"));
+// Load the first Bible version to get a random verse
+const firstBiblePath = path.resolve(bibleVersion[0].path);
+const firstBibleData = JSON.parse(fs.readFileSync(firstBiblePath, "utf-8"));
 
 function getRandomElement(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
 
 function getRandomVerse() {
-  const books = Object.keys(bibleData);
+  const books = Object.keys(firstBibleData);
   const book = getRandomElement(books);
 
-  const chapters = Object.keys(bibleData[book]);
+  const chapters = Object.keys(firstBibleData[book]);
   const chapter = getRandomElement(chapters);
 
-  const verses = Object.keys(bibleData[book][chapter]);
+  const verses = Object.keys(firstBibleData[book][chapter]);
   const verseNumber = getRandomElement(verses);
-  const verseText = bibleData[book][chapter][verseNumber];
 
-  return { book, chapter, verseNumber, verseText };
+  return { book, chapter, verseNumber };
 }
 
-const verse = getRandomVerse();
+// Get the random verse reference
+const verseRef = getRandomVerse();
+
+// Fetch all translations of this verse
+const allTranslations = {};
+
+for (const version of bibleVersion) {
+  try {
+    const biblePath = path.resolve(version.path);
+    const bibleData = JSON.parse(fs.readFileSync(biblePath, "utf-8"));
+
+    const verseText =
+      bibleData[verseRef.book]?.[verseRef.chapter]?.[verseRef.verseNumber];
+
+    if (verseText) {
+      allTranslations[version.id] = {
+        abbr: version.abbr,
+        name: version.name,
+        text: verseText,
+      };
+    } else {
+      allTranslations[version.id] = {
+        abbr: version.abbr,
+        name: version.name,
+        text: "Not available in this translation",
+      };
+    }
+  } catch (error) {
+    console.error(`Error loading ${version.id}:`, error);
+    allTranslations[version.id] = {
+      abbr: version.abbr,
+      name: version.name,
+      text: "Error loading translation",
+    };
+  }
+}
+
+// Convert to JSON for client-side use
+const translationsJSON = JSON.stringify(allTranslations);
+const verseRefJSON = JSON.stringify(verseRef);
 ---
 
-<label for="bible-version">Bible Version:</label>
-<select id="bible-version">
-  {
-    bibleVersion.map((version) => (
-      <option value={version.id} selected={version.id === selectedVersion.id}>
-        {version.abbr} - {version.name}
-      </option>
-    ))
-  }
-</select>
+<div>
+  <h1 class="verse-heading">
+    {verseRef.book}
+    {verseRef.chapter}:{verseRef.verseNumber}
+  </h1>
 
-<div class="verse">
-  <h2 class="verse-heading">
-    {verse.book}
-    {verse.chapter}:{verse.verseNumber}
-  </h2>
-  <p class="verse-content">{verse.verseText}</p>
-  <a href="#0">Read more</a>
+  <div class="card-wrapper">
+    {
+      Object.entries(allTranslations).map(([id, translation]) => (
+        <div class="card">
+          <h2>{translation.name}</h2>
+          <h3>{translation.abbr}</h3>
+          <p>{translation.text}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <button id="random-button">Get Another Random Verse</button>
 </div>
 
-<script>
-  const versionSelect = document.getElementById("bible-version");
+<script define:vars={{ translationsJSON, verseRefJSON }}>
+  // Parse the translations object
+  const translations = JSON.parse(translationsJSON);
+  const verseReference = JSON.parse(verseRefJSON);
 
-  versionSelect?.addEventListener("change", (e) => {
-    const selectedVersion = (e.target as HTMLSelectElement).value;
-    window.location.href = `?version=${selectedVersion}`;
+  console.log("Verse Reference:", verseReference);
+  console.log("All Translations:", translations);
+
+  // You can now do whatever you want with this data!
+  // Example: Access a specific translation
+  console.log("KJV Translation:", translations.eng_kjv?.text);
+  console.log("NIV Translation:", translations.niv?.text);
+
+  // Handle Random button click
+  const randomButton = document.getElementById("random-button");
+  randomButton?.addEventListener("click", () => {
+    window.location.reload();
   });
+
+  // Example: You can manipulate the translations object
+  // Filter only translations that are available
+  const availableTranslations = Object.entries(translations).filter(
+    ([id, trans]) => trans.text !== "Not available in this translation"
+  );
+  console.log("Available Translations:", availableTranslations);
 </script>

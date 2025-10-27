@@ -1,0 +1,71 @@
+---
+import fs from "fs";
+import path from "path";
+import Layout from "../../../layouts/Layout.astro";
+
+export function getStaticPaths() {
+  // Define bibleVersions INSIDE getStaticPaths
+  const bibleVersions = [
+    {
+      abbr: "kjv",
+      name: "King James Version",
+      path: "./src/data/eng_kjv.json",
+    },
+    {
+      abbr: "niv",
+      name: "New International Version",
+      path: "./src/data/niv.json",
+    },
+    {
+      abbr: "asv",
+      name: "American Standard Version",
+      path: "./src/data/eng_asv.json",
+    },
+    {
+      abbr: "web",
+      name: "World English Bible",
+      path: "./src/data/eng_web.json",
+    },
+  ];
+
+  const paths = [];
+
+  for (const version of bibleVersions) {
+    const filePath = path.resolve(version.path);
+    const bibleData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const books = Object.keys(bibleData);
+
+    paths.push({
+      params: { version: version.abbr },
+      props: {
+        versionName: version.name,
+        versionAbbr: version.abbr,
+        books: books,
+      },
+    });
+  }
+
+  return paths;
+}
+
+const { versionName, versionAbbr, books } = Astro.props;
+---
+
+<Layout name="Book">
+  <h1>{versionName} ({versionAbbr.toUpperCase()})</h1>
+  <h2>Books</h2>
+
+  <ul class="book-list">
+    {
+      books.map((book) => (
+        <li>
+          <a
+            href={`/bible/${versionAbbr}/${book.toLowerCase().replace(/\s+/g, "-")}`}
+          >
+            {book}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>

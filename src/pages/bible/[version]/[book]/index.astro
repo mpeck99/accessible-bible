@@ -1,0 +1,83 @@
+---
+import fs from "fs";
+import path from "path";
+import Layout from "../../../../layouts/Layout.astro";
+
+export function getStaticPaths() {
+  const bibleVersions = [
+    {
+      abbr: "kjv",
+      name: "King James Version",
+      path: "./src/data/eng_kjv.json",
+    },
+    {
+      abbr: "niv",
+      name: "New International Version",
+      path: "./src/data/niv.json",
+    },
+    {
+      abbr: "asv",
+      name: "American Standard Version",
+      path: "./src/data/eng_asv.json",
+    },
+    {
+      abbr: "web",
+      name: "World English Bible",
+      path: "./src/data/eng_web.json",
+    },
+  ];
+
+  const paths = [];
+
+  for (const version of bibleVersions) {
+    const filePath = path.resolve(version.path);
+    const bibleData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    for (const [bookName, chapters] of Object.entries(bibleData)) {
+      const bookSlug = bookName.toLowerCase().replace(/\s+/g, "-");
+      const chapterNumbers = Object.keys(chapters);
+
+      paths.push({
+        params: {
+          version: version.abbr,
+          book: bookSlug,
+        },
+        props: {
+          versionName: version.name,
+          versionAbbr: version.abbr,
+          bookName: bookName,
+          bookSlug: bookSlug,
+          chapters: chapterNumbers,
+        },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { versionName, versionAbbr, bookName, bookSlug, chapters } = Astro.props;
+---
+
+<Layout name="Chapter">
+  <nav class="breadcrumb">
+    <a href={`/bible/${versionAbbr}`}>{versionAbbr.toUpperCase()}</a>
+    <span>/</span>
+    <span>{bookName}</span>
+  </nav>
+
+  <h1>{bookName}</h1>
+  <h2>Chapters</h2>
+
+  <ul class="chapter-list">
+    {
+      chapters.map((chapterNum) => (
+        <li>
+          <a href={`/bible/${versionAbbr}/${bookSlug}/${chapterNum}`}>
+            Chapter {chapterNum}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>

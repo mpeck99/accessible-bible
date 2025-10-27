@@ -1,0 +1,125 @@
+---
+import fs from "fs";
+import path from "path";
+import Layout from "../../../../layouts/Layout.astro";
+
+export function getStaticPaths() {
+  const bibleVersions = [
+    {
+      abbr: "kjv",
+      name: "King James Version",
+      path: "./src/data/eng_kjv.json",
+    },
+    {
+      abbr: "niv",
+      name: "New International Version",
+      path: "./src/data/niv.json",
+    },
+    {
+      abbr: "asv",
+      name: "American Standard Version",
+      path: "./src/data/eng_asv.json",
+    },
+    {
+      abbr: "web",
+      name: "World English Bible",
+      path: "./src/data/eng_web.json",
+    },
+  ];
+
+  const paths = [];
+
+  for (const version of bibleVersions) {
+    const filePath = path.resolve(version.path);
+    const bibleData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    for (const [bookName, chapters] of Object.entries(bibleData)) {
+      const bookSlug = bookName.toLowerCase().replace(/\s+/g, "-");
+
+      for (const [chapterNumber, verses] of Object.entries(chapters)) {
+        paths.push({
+          params: {
+            version: version.abbr,
+            book: bookSlug,
+            chapter: chapterNumber,
+          },
+          props: {
+            versionName: version.name,
+            versionAbbr: version.abbr,
+            bookName: bookName,
+            bookSlug: bookSlug,
+            chapterNumber: chapterNumber,
+            verses: verses,
+            totalChapters: Object.keys(chapters).length,
+          },
+        });
+      }
+    }
+  }
+
+  return paths;
+}
+
+const {
+  versionName,
+  versionAbbr,
+  bookName,
+  bookSlug,
+  chapterNumber,
+  verses,
+  totalChapters,
+} = Astro.props;
+
+const currentChapterNum = parseInt(chapterNumber);
+const hasPrevious = currentChapterNum > 1;
+const hasNext = currentChapterNum < totalChapters;
+
+const prevUrl = hasPrevious
+  ? `/bible/${versionAbbr}/${bookSlug}/${currentChapterNum - 1}`
+  : null;
+const nextUrl = hasNext
+  ? `/bible/${versionAbbr}/${bookSlug}/${currentChapterNum + 1}`
+  : null;
+---
+
+<Layout name="Verse">
+  <nav class="breadcrumb">
+    <a href={`/bible/${versionAbbr}`}>{versionAbbr.toUpperCase()}</a>
+    <span>/</span>
+    <a href={`/bible/${versionAbbr}/${bookSlug}`}>{bookName}</a>
+    <span>/</span>
+    <span>Chapter {chapterNumber}</span>
+  </nav>
+
+  <h1>{bookName} {chapterNumber}</h1>
+  <p class="version">{versionName}</p>
+
+  <div class="verses">
+    {
+      Object.entries(verses).map(([verseNum, verseText]) => (
+        <div class="verse">
+          <span class="verse-number">{verseNum}</span>
+          <span class="verse-text">{verseText}</span>
+        </div>
+      ))
+    }
+  </div>
+
+  <nav class="chapter-nav">
+    {
+      prevUrl && (
+        <a href={prevUrl} class="nav-link prev">
+          Previous Chapter
+        </a>
+      )
+    }
+
+    {
+      nextUrl && (
+        <a href={nextUrl} class="nav-link next">
+          Next Chapter
+        </a>
+      )
+    }
+  </nav>
+</Layout>
