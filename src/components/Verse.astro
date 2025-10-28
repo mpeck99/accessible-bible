@@ -1,8 +1,40 @@
 ---
 import fs from "fs";
 import path from "path";
+import { toSentenceCase } from "../utils/toSentenceCase.js";
 
-const bibleVersion = [
+interface BibleVersion {
+  id: string;
+  abbr: string;
+  name: string;
+  path: string;
+}
+
+interface VerseReference {
+  book: string;
+  chapter: string;
+  verseNumber: string;
+}
+
+interface BibleData {
+  [book: string]: {
+    [chapter: string]: {
+      [verse: string]: string;
+    };
+  };
+}
+
+interface Translation {
+  abbr: string;
+  name: string;
+  text: string;
+}
+
+interface AllTranslations {
+  [id: string]: Translation;
+}
+
+const bibleVersion: BibleVersion[] = [
   {
     id: "eng_kjv",
     abbr: "KJV",
@@ -29,54 +61,81 @@ const bibleVersion = [
   },
 ];
 
-// Load the first Bible version to get a random verse
-const firstBiblePath = path.resolve(bibleVersion[0].path);
-const firstBibleData = JSON.parse(fs.readFileSync(firstBiblePath, "utf-8"));
+const firstBiblePath: string = path.resolve(bibleVersion[0].path);
+const firstBibleData: BibleData = JSON.parse(
+  fs.readFileSync(firstBiblePath, "utf-8")
+);
 
-function getRandomElement(array) {
+function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }
 
-function getRandomVerse() {
-  const books = Object.keys(firstBibleData);
-  const book = getRandomElement(books);
+function getRandomVerse(): VerseReference {
+  const books: string[] = Object.keys(firstBibleData);
+  const book: string = getRandomElement(books);
 
-  const chapters = Object.keys(firstBibleData[book]);
-  const chapter = getRandomElement(chapters);
+  const chapters: string[] = Object.keys(firstBibleData[book]);
+  const chapter: string = getRandomElement(chapters);
 
-  const verses = Object.keys(firstBibleData[book][chapter]);
-  const verseNumber = getRandomElement(verses);
+  const verses: string[] = Object.keys(firstBibleData[book][chapter]);
+  const verseNumber: string = getRandomElement(verses);
 
   return { book, chapter, verseNumber };
 }
 
-// Get the random verse reference
-const verseRef = getRandomVerse();
+const verseRef: VerseReference = getRandomVerse();
 
-// Fetch all translations of this verse
-const allTranslations = {};
+// Map for book name discrepancies across translations
+const bookNameMap: { [key: string]: string } = {
+  "Song of Solomon": "Song of Songs",
+  "Song of Songs": "Song of Solomon",
+  "1 Samuel": "First Samuel",
+  "2 Samuel": "Second Samuel",
+  "1 Kings": "First Kings",
+  "2 Kings": "Second Kings",
+  "1 Chronicles": "First Chronicles",
+  "2 Chronicles": "Second Chronicles",
+  "1 Corinthians": "First Corinthians",
+  "2 Corinthians": "Second Corinthians",
+  "1 Thessalonians": "First Thessalonians",
+  "2 Thessalonians": "Second Thessalonians",
+  "1 Timothy": "First Timothy",
+  "2 Timothy": "Second Timothy",
+  "1 Peter": "First Peter",
+  "2 Peter": "Second Peter",
+  "1 John": "First John",
+  "2 John": "Second John",
+  "3 John": "Third John",
+  Revelation: "The Revelation",
+  "The Revelation": "Revelation",
+};
+
+const allTranslations: AllTranslations = {};
 
 for (const version of bibleVersion) {
   try {
-    const biblePath = path.resolve(version.path);
-    const bibleData = JSON.parse(fs.readFileSync(biblePath, "utf-8"));
+    const biblePath: string = path.resolve(version.path);
+    const bibleData: BibleData = JSON.parse(
+      fs.readFileSync(biblePath, "utf-8")
+    );
 
-    const verseText =
-      bibleData[verseRef.book]?.[verseRef.chapter]?.[verseRef.verseNumber];
+    // Normalize book name
+    const bookKey: string = bibleData[verseRef.book]
+      ? verseRef.book
+      : bookNameMap[verseRef.book] || verseRef.book;
 
-    if (verseText) {
-      allTranslations[version.id] = {
-        abbr: version.abbr,
-        name: version.name,
-        text: verseText,
-      };
-    } else {
-      allTranslations[version.id] = {
-        abbr: version.abbr,
-        name: version.name,
-        text: "Not available in this translation",
-      };
-    }
+    // Convert chapter and verse to strings
+    const chapterKey: string = String(verseRef.chapter);
+    const verseKey: string = String(verseRef.verseNumber);
+
+    const verseText: string | undefined =
+      bibleData[bookKey]?.[chapterKey]?.[verseKey];
+
+    allTranslations[version.id] = {
+      abbr: version.abbr,
+      name: version.name,
+      text: verseText || "Not available in this translation",
+    };
   } catch (error) {
     console.error(`Error loading ${version.id}:`, error);
     allTranslations[version.id] = {
@@ -87,51 +146,130 @@ for (const version of bibleVersion) {
   }
 }
 
-// Convert to JSON for client-side use
-const translationsJSON = JSON.stringify(allTranslations);
-const verseRefJSON = JSON.stringify(verseRef);
+const translationsJSON: string = JSON.stringify(allTranslations);
+const verseRefJSON: string = JSON.stringify(verseRef);
 ---
 
 <div class="verse">
-  <h1 class="verse-heading">
-    {verseRef.book}
-    {verseRef.chapter}:{verseRef.verseNumber}
-  </h1>
-  <button id="refresh">Refresh</button>
+  <div class="verse-header">
+    <h1>
+      {verseRef.book}
+      {verseRef.chapter}:{verseRef.verseNumber}
+    </h1>
+    <button id="refresh" class="btn-refresh">
+      <span class="visually-hidden">Refresh</span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        class="size-6"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M4.755 10.059a7.5 7.5 0 0 1 12.548-3.364l1.903 1.903h-3.183a.75.75 0 1 0 0 1.5h4.992a.75.75 0 0 0 .75-.75V4.356a.75.75 0 0 0-1.5 0v3.18l-1.9-1.9A9 9 0 0 0 3.306 9.67a.75.75 0 1 0 1.45.388Zm15.408 3.352a.75.75 0 0 0-.919.53 7.5 7.5 0 0 1-12.548 3.364l-1.902-1.903h3.183a.75.75 0 0 0 0-1.5H2.984a.75.75 0 0 0-.75.75v4.992a.75.75 0 0 0 1.5 0v-3.18l1.9 1.9a9 9 0 0 0 15.059-4.035.75.75 0 0 0-.53-.918Z"
+          clip-rule="evenodd"></path>
+      </svg>
+    </button>
+  </div>
 
   <div class="card-wrapper">
     {
-      Object.entries(allTranslations).map(([id, translation]) => (
-        <div class="card">
-          <h2>{translation.name}</h2>
-          <h3>{translation.abbr}</h3>
-          <p>{translation.text}</p>
-        </div>
-      ))
+      Object.entries(allTranslations).map(
+        ([id, translation]: [string, Translation]) => (
+          <article class="card" key={id}>
+            <div class="inner">
+              <h2>{translation.name}</h2>
+              <p class="verse-text">{toSentenceCase(translation.text)}</p>
+            </div>
+          </article>
+        )
+      )
     }
   </div>
 </div>
 
+<style lang="scss">
+  .card-wrapper {
+    max-width: 100%;
+    width: 100%;
+    height: calc(100% - 100px);
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .card {
+    min-width: 300px;
+    max-width: 100%;
+
+    flex: 1 1 calc(50% - 3rem);
+
+    background: var(--clr-white);
+    color: var(--clr-sage);
+
+    .inner {
+      height: calc(100% - 2rem);
+      display: flex;
+      flex-direction: column;
+
+      flex: 1 1 calc(50% - 3rem);
+
+      padding: 1rem;
+    }
+
+    h2 {
+      font-size: var(--font-sm);
+    }
+
+    p {
+      font-size: var(--font-sm);
+    }
+  }
+
+  .btn-refresh {
+    border: none;
+    background: none;
+    cursor: pointer;
+
+    svg {
+      width: 2rem;
+      fill: var(--clr-white);
+    }
+
+    &:hover,
+    &:focus {
+      svg {
+        fill: var(--clr-yellow);
+      }
+    }
+  }
+
+  .verse {
+    height: 100%;
+  }
+  .verse-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  /* Remove capitalize; sentence case handled in JS */
+  .verse-text {
+    text-transform: none;
+  }
+</style>
+
 <script define:vars={{ translationsJSON, verseRefJSON }}>
-  // Parse the translations object
   const translations = JSON.parse(translationsJSON);
   const verseReference = JSON.parse(verseRefJSON);
 
-  console.log("Verse Reference:", verseReference);
-  console.log("All Translations:", translations);
-
-  console.log("KJV Translation:", translations.eng_kjv?.text);
-  console.log("NIV Translation:", translations.niv?.text);
-
-  // Handle Random button click
   const randomButton = document.getElementById("refresh");
   randomButton?.addEventListener("click", () => {
     window.location.reload();
   });
 
-  // Filter only translations that are available
   const availableTranslations = Object.entries(translations).filter(
     ([id, trans]) => trans.text !== "Not available in this translation"
   );
-  console.log("Available Translations:", availableTranslations);
 </script>

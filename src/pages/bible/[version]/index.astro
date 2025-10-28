@@ -53,8 +53,6 @@ const { versionName, versionAbbr, books } = Astro.props;
 
 <Layout name="Book">
   <h1>{versionName} ({versionAbbr.toUpperCase()})</h1>
-  <h2>Books</h2>
-
   <ul class="list-unstyled list-cols">
     {
       books.map((book) => (
