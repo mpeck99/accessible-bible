@@ -1,5 +1,5 @@
 <header class="site-header">
-  <nav>
+  <nav class="site-nav" id="site-nav">
     <ul class="list-unstyled">
       <li><a href="/">Home</a></li>
       <li><a href="/bible/asv">American Standard Version<br />(ASV)</a></li>
@@ -8,8 +8,15 @@
       <li><a href="/bible/web">World English Bible<br />(WEB)</a></li>
     </ul>
   </nav>
-  <button type="button" class="header-toggle">
-    <span class="visually-hidden" id="panel-status">Open Panel</span>
+
+  <button
+    type="button"
+    class="header-toggle"
+    id="header-toggle"
+    aria-expanded="false"
+    aria-controls="site-nav"
+  >
+    <span class="visually-hidden" id="panel-status">Open Menu</span>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -24,4 +31,21 @@
         d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5"></path>
     </svg>
   </button>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggleBtn = document.getElementById("header-toggle");
+      const nav = document.querySelector(".site-header");
+      const statusText = document.getElementById("panel-status");
+
+      if (!toggleBtn || !nav || !statusText) return;
+
+      toggleBtn.addEventListener("click", () => {
+        const isOpen = toggleBtn.getAttribute("aria-expanded") === "true";
+        toggleBtn.setAttribute("aria-expanded", String(!isOpen));
+        nav.classList.toggle("js-header-open");
+        statusText.textContent = isOpen ? "Open Menu" : "Close Menu";
+      });
+    });
+  </script>
 </header>

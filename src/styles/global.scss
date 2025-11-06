@@ -4,7 +4,7 @@
   --clr-white: #fafffd;
   --clr-sage: #1c1e17;
   --clr-sage-md: #282c1d;
-  --clr-yellow: #b39231;
+  --clr-yellow: #cfaf4f;
   --clr-black: #1e1e1e;
 
   --ff-serif: "Newsreader", serif;
@@ -104,8 +104,20 @@ a:visited {
 
   background: var(--clr-red);
 
+  &.js-header-open {
+    nav {
+      display: block;
+    }
+
+    .header-toggle {
+      transform: rotate(180deg);
+    }
+  }
+
   nav {
     height: 100%;
+
+    display: none;
   }
 
   ul {
@@ -158,6 +170,17 @@ a:visited {
     border: none;
     background: var(--clr-red);
     border-radius: 50%;
+
+    transition: all 0.3s ease-in;
+
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+      svg {
+        stroke: var(--clr-yellow);
+      }
+    }
 
     svg {
       width: 2rem;
