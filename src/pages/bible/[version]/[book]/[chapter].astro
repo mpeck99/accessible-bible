@@ -80,9 +80,11 @@ const prevUrl = hasPrevious
 const nextUrl = hasNext
   ? `/bible/${versionAbbr}/${bookSlug}/${currentChapterNum + 1}`
   : null;
+
+const pageTitle = `${bookName} chapter ${chapterNumber}`;
 ---
 
-<Layout name="Verse">
+<Layout title={pageTitle}>
   <nav class="breadcrumb">
     <a href={`/bible/${versionAbbr}`}>{versionAbbr.toUpperCase()}</a>
     <span>/</span>
@@ -107,7 +109,7 @@ const nextUrl = hasNext
   <nav class="chapter-nav">
     {
       prevUrl && (
-        <a href={prevUrl} class="nav-link prev">
+        <a href={prevUrl} class="nav-link nav-link--prev">
           Previous Chapter
         </a>
       )
@@ -115,10 +117,26 @@ const nextUrl = hasNext
 
     {
       nextUrl && (
-        <a href={nextUrl} class="nav-link next">
+        <a href={nextUrl} class="nav-link nav-link--next">
           Next Chapter
         </a>
       )
     }
   </nav>
 </Layout>
+
+<style scoped>
+  .chapter-nav {
+    width: 100%;
+
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+
+    padding-block-end: 2rem;
+  }
+
+  .chapter-nav > .nav-link--next:only-child {
+    margin-left: auto;
+  }
+</style>

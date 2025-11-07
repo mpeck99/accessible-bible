@@ -49,9 +49,10 @@ export function getStaticPaths() {
 }
 
 const { versionName, versionAbbr, books } = Astro.props;
+const pageTitle = `${versionName} (${versionAbbr.toLocaleUpperCase()})`;
 ---
 
-<Layout name="Book">
+<Layout title={pageTitle}>
   <h1>{versionName} ({versionAbbr.toUpperCase()})</h1>
   <ul class="list-unstyled list-cols">
     {

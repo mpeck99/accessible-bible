@@ -59,7 +59,7 @@ export function getStaticPaths() {
 const { versionName, versionAbbr, bookName, bookSlug, chapters } = Astro.props;
 ---
 
-<Layout name="Chapter">
+<Layout title={bookName}>
   <nav class="breadcrumb">
     <a href={`/bible/${versionAbbr}`}>{versionAbbr.toUpperCase()}</a>
     <span>/</span>
